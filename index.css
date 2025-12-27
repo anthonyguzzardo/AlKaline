@@ -1,0 +1,129 @@
+*{
+    font-size: 40px;
+}
+body{
+    background-color: #18181b;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+button {
+    all: unset;
+    width: 50px;
+    height: 20px;
+    padding: 30px;
+    border: 1px solid #e5e7eb;
+    border-radius: 30px;
+    text-align: center;
+    font-weight: bold;
+    margin: 5px;
+    line-height: 20px; /* match height */
+}
+
+
+button:hover{
+    background-color: black;
+    color: white;
+}
+.page-container{
+    display: grid;
+    justify-content: center;
+}
+.calc-name-field{
+    background-color: rgb(39 39 42/.5);
+    color: rgb(205, 205, 205);
+    display: flex;
+    flex-direction: column;
+    margin: 40px;
+    border: .4px solid #e5e7eb;
+    padding: 10px;
+    border-radius: 10px;
+}
+
+.calculator-container{
+    background-color: rgb(39 39 42/.5);
+    border: 2px solid grey;
+    width: fit-content;
+    padding: 30px;
+    border-radius: 10px;
+}
+
+
+.calculator-head{
+    display: flex;
+    flex-direction: column;
+    background-color: rgba(86, 86, 86, 0.433);
+    height: 110px;
+    margin-bottom: 20px;
+    border-radius: 10px;
+    width: 100%;
+}
+.calculator-body{
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    width: 100%;
+}
+
+
+#title{
+    font-size: 30px;
+    text-align: center;
+}
+#title-p{
+    font-size: 20px;
+}
+#title-p2{
+    font-size: 18px;
+}
+
+.current-operation{
+    all: unset;
+    width: 90%;
+    font-size: 30px;
+    color: rgb(160, 159, 159);
+    text-align: right;
+    padding-left: 20px;
+    margin: 5px;
+}
+.current-input{
+    all: unset;
+    width: 90%;
+    font-size: 40px;
+    color: white;
+    text-align: right;
+    padding-left: 20px;
+    margin: 5px;
+}   
+
+
+.calculator-number{
+    background-color: white;
+}
+.calculator-number:active{
+    background-color: white;
+    color: black;
+}
+
+.calculator-operators{
+    display: flex;
+    flex-direction: column;
+    margin-left: 10px;
+}
+.calculator-operator{
+    background-color: orange;
+}
+.calculator-operator:active{
+    background-color: orange;
+}
+
+#clear{
+    background-color: rgb(255, 39, 39);
+}
+#clear:active{
+    background-color: rgb(255, 39, 39);
+}
+#equals{
+    background-color: rgb(74, 194, 74);
+}
+#equals:active{
+    background-color: rgb(74, 194, 74);
+}
