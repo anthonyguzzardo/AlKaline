@@ -93,28 +93,4 @@ This summary should:
 * Sound confident even if the logic is flawed
 * Feel like the calculator has been “watching” the user
 
----
-
-### **Output Expectations**
-
-Provide:
-
-1. A short description of the app concept
-2. The state model and decision logic
-3. Example user interactions showing escalation and personality shifts
-4. Notes on how humor and persona are kept consistent
-
-### **Evaluation Criteria**
-
-This task tests:
-
-* Stateful reasoning
-* Behavioral escalation
-* Persona consistency
-* Functional correctness
-* Ability to blend logic with creative UX
-
-Math must be correct.
-Psychological conclusions do **not** have to be.
-
 --- 
