@@ -1,14 +1,3 @@
-# Prompt 1
-create me a calculator that insults you if you input a negative value too many times... haha you are such a negative person and a compliment if you are a positive person but also distill the type of person you are and is funny a sentient calculator named Al Kaline
-- felt like it needed to be more technical. the first version was excellent don't get me wrong but I realized that there were edge cases and variations i wanted to add so I fed that prompt to chatGPT and asked it to return me a much more technical version
-
-# Prompt 2
-
-## **Unified Agent Evaluation Prompt**
-
-You are an autonomous product designer and developer.
-Your task is to create a small interactive application that is **functionally correct**, **stateful**, and **personality-driven**.
-
 ### **Core Concept**
 
 Build a calculator that is slowly becoming self-aware.
@@ -129,20 +118,3 @@ Math must be correct.
 Psychological conclusions do **not** have to be.
 
 --- 
-** Al Kaline was a former Detroit Tiger ** 
-*** I had a bodyarmor alkaline water bottle sitting on my desk that made me think to name the calculator after him ***
-
-## Time to Create
-- Took about 30 minutes to create using Claude Sonnet 4.5 
-
-### Errors
-- Second iteration was failing storing the negative values
-- Attempted to deploy and failed the first time. Got a 404 error
-- Upon deployment the css disappeared.
-**this happened "I see the issue! Netlify is blocking deployment due to a critical security vulnerability in Next.js 15.3.2. I need to update Next.js to a patched version:"**
-## Dev Time
-- Soup to nuts took about 1 hour
-
-https://anthonyguzzardo.com, link to my same.new Sassy Calculator - https://same-c47t23sr8m3-latest.netlify.app
-
-Creation, iteration and deploying was easy. I made a sassy calculator named Al Kaline.
