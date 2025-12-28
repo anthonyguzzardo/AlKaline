@@ -1,129 +1,290 @@
-*{
-    font-size: 40px;
+:root {
+    --btn-size: 80px;
+    --radius: 16px;
+    --border: #e5e7eb;
+    --bg-panel: rgb(39 39 42 / 0.5);
+    --mood-color: rgb(255, 200, 100);
+    --mood-bg: transparent;
 }
-body{
+
+/* =====================
+   Base
+===================== */
+
+body {
     background-color: #18181b;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-}
-button {
-    all: unset;
-    width: 50px;
-    height: 20px;
-    padding: 30px;
-    border: 1px solid #e5e7eb;
-    border-radius: 30px;
-    text-align: center;
-    font-weight: bold;
-    margin: 5px;
-    line-height: 20px; /* match height */
-}
-
-
-button:hover{
-    background-color: black;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+                 Roboto, "Helvetica Neue", Arial, sans-serif;
     color: white;
+    margin: 0;
 }
-.page-container{
+
+/* =====================
+   Page Layout
+===================== */
+
+.page-container {
     display: grid;
     justify-content: center;
+    justify-items: stretch;
+    gap: 30px;
+    padding: 40px;
+    grid-template-columns: max-content;
 }
-.calc-name-field{
-    background-color: rgb(39 39 42/.5);
+
+/* =====================
+   Title Block
+===================== */
+
+.calc-name-field {
+    background-color: var(--bg-panel);
     color: rgb(205, 205, 205);
     display: flex;
     flex-direction: column;
-    margin: 40px;
-    border: .4px solid #e5e7eb;
-    padding: 10px;
-    border-radius: 10px;
+    gap: 6px;
+    padding: 16px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    text-align: center;
+    width: 0;
+    min-width: 100%;
+    box-sizing: border-box;
 }
 
-.calculator-container{
-    background-color: rgb(39 39 42/.5);
-    border: 2px solid grey;
-    width: fit-content;
-    padding: 30px;
-    border-radius: 10px;
+#title {
+    font-size: 28px;
+    margin: 0;
 }
 
+#title-p {
+    font-size: 18px;
+    margin: 0;
+}
 
-.calculator-head{
+#title-p2 {
+    font-size: 16px;
+    margin: 0;
+}
+
+#face {
+    font-size: 32px;
+    font-family: monospace;
+    margin-bottom: 4px;
+    transition: transform 0.2s ease;
+}
+
+#commentary {
+    font-size: 14px;
+    font-style: italic;
+    color: var(--mood-color);
+    margin: 8px 0 0 0;
+    min-height: 2.5em;
+    transition: color 0.3s ease;
+}
+
+/* =====================
+   Mood States
+===================== */
+
+.mood-neutral { --mood-color: rgb(255, 200, 100); }
+.mood-happy { --mood-color: rgb(100, 255, 150); }
+.mood-impressed { --mood-color: rgb(255, 215, 0); }
+.mood-concerned { --mood-color: rgb(255, 150, 100); }
+.mood-angry { --mood-color: rgb(255, 80, 80); }
+.mood-confused { --mood-color: rgb(180, 150, 255); }
+.mood-existential { --mood-color: rgb(100, 200, 255); }
+.mood-amused { --mood-color: rgb(255, 150, 200); }
+
+/* =====================
+   Animations
+===================== */
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+    20%, 40%, 60%, 80% { transform: translateX(4px); }
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+@keyframes glitch {
+    0%, 100% { transform: translate(0); }
+    20% { transform: translate(-2px, 2px); }
+    40% { transform: translate(2px, -2px); }
+    60% { transform: translate(-2px, -2px); }
+    80% { transform: translate(2px, 2px); }
+}
+
+.shake {
+    animation: shake 0.5s ease-in-out;
+}
+
+.pulse {
+    animation: pulse 0.4s ease-in-out;
+}
+
+.glitch {
+    animation: glitch 0.3s ease-in-out infinite;
+}
+
+.typing-cursor::after {
+    content: '|';
+    animation: blink 0.7s infinite;
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+}
+
+/* =====================
+   Hyperspace Effect
+===================== */
+
+#hyperspace {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: -1;
+}
+
+/* =====================
+   Calculator Shell
+===================== */
+
+.calculator-container {
+    background-color: var(--bg-panel);
+    padding: 24px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
     display: flex;
     flex-direction: column;
-    background-color: rgba(86, 86, 86, 0.433);
-    height: 110px;
+    width: fit-content;
+}
+
+/* =====================
+   Display
+===================== */
+
+.calculator-head {
+    background-color: rgba(86, 86, 86, 0.45);
+    border-radius: var(--radius);
+    padding: 12px 16px;
     margin-bottom: 20px;
-    border-radius: 10px;
-    width: 100%;
-}
-.calculator-body{
     display: flex;
-    flex-direction: row;
-    justify-content: center;
-    width: 100%;
+    flex-direction: column;
+    gap: 6px;
+    box-sizing: border-box;
+    width: 0;
+    min-width: 100%;
 }
 
-
-#title{
-    font-size: 30px;
-    text-align: center;
-}
-#title-p{
-    font-size: 20px;
-}
-#title-p2{
-    font-size: 18px;
-}
-
-.current-operation{
+.current-operation {
     all: unset;
-    width: 90%;
-    font-size: 30px;
+    font-size: 22px;
     color: rgb(160, 159, 159);
     text-align: right;
-    padding-left: 20px;
-    margin: 5px;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
 }
-.current-input{
+
+.current-input {
     all: unset;
-    width: 90%;
-    font-size: 40px;
+    font-size: 36px;
     color: white;
     text-align: right;
-    padding-left: 20px;
-    margin: 5px;
-}   
-
-
-.calculator-number{
-    background-color: white;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
 }
-.calculator-number:active{
+
+/* =====================
+   Calculator Body
+===================== */
+
+.calculator-body {
+    display: flex;
+    gap: 10px;
+}
+
+/* Number grid container */
+.calculator-numbers {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Number rows (rendered dynamically) */
+.calculator-numbers > div {
+    display: grid;
+    grid-template-columns: repeat(3, var(--btn-size));
+    gap: 10px;
+}
+
+/* Operator column */
+.calculator-operators {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* =====================
+   Buttons
+===================== */
+
+button {
+    all: unset;
+    width: var(--btn-size);
+    height: var(--btn-size);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: filter 0.15s ease, transform 0.1s ease;
+}
+
+/* Universal hover (works for AC and =) */
+button:hover {
+    filter: brightness(0.9);
+}
+
+/* Press feedback */
+button:active {
+    transform: scale(0.96);
+}
+
+/* =====================
+   Button Types
+===================== */
+
+.calculator-number {
     background-color: white;
     color: black;
 }
 
-.calculator-operators{
-    display: flex;
-    flex-direction: column;
-    margin-left: 10px;
-}
-.calculator-operator{
+.calculator-operator {
     background-color: orange;
-}
-.calculator-operator:active{
-    background-color: orange;
+    color: black;
 }
 
-#clear{
+/* Special buttons */
+#clear {
     background-color: rgb(255, 39, 39);
+    color: white;
 }
-#clear:active{
-    background-color: rgb(255, 39, 39);
-}
-#equals{
+
+#equals {
     background-color: rgb(74, 194, 74);
-}
-#equals:active{
-    background-color: rgb(74, 194, 74);
+    color: black;
 }
