@@ -1159,6 +1159,12 @@ const alKaline = {
 
     // Type text with effect
     typeText(text, mood = 'neutral', callback) {
+        // Cancel any ongoing typing animation
+        if (this.typingTimeoutId) {
+            clearTimeout(this.typingTimeoutId);
+            this.typingTimeoutId = null;
+        }
+
         this.setMood(mood);
         this.commentaryEl.textContent = '';
         this.commentaryEl.classList.add('typing-cursor');
@@ -1170,8 +1176,9 @@ const alKaline = {
             if (i < text.length) {
                 this.commentaryEl.textContent += text.charAt(i);
                 i++;
-                setTimeout(type, speed);
+                this.typingTimeoutId = setTimeout(type, speed);
             } else {
+                this.typingTimeoutId = null;
                 this.commentaryEl.classList.remove('typing-cursor');
                 if (callback) callback();
             }
