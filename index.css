@@ -49,6 +49,7 @@ body {
     width: 0;
     min-width: 100%;
     box-sizing: border-box;
+    min-height: 180px;
 }
 
 #title {
@@ -287,4 +288,158 @@ button:active {
 #equals {
     background-color: rgb(74, 194, 74);
     color: black;
+}
+
+/* =====================
+   Mobile Responsive
+===================== */
+
+@media screen and (max-width: 480px) {
+    :root {
+        --btn-size: 60px;
+        --radius: 12px;
+    }
+
+    .page-container {
+        padding: 20px 15px;
+        gap: 20px;
+    }
+
+    .calc-name-field {
+        padding: 12px;
+        min-height: 160px;
+    }
+
+    #face {
+        font-size: 26px;
+    }
+
+    #title {
+        font-size: 22px;
+    }
+
+    #title-p {
+        font-size: 14px;
+    }
+
+    #title-p2 {
+        font-size: 12px;
+    }
+
+    #commentary {
+        font-size: 12px;
+        min-height: 2.8em;
+    }
+
+    .calculator-container {
+        padding: 16px;
+    }
+
+    .calculator-head {
+        padding: 10px 12px;
+        margin-bottom: 15px;
+    }
+
+    .current-operation {
+        font-size: 16px;
+    }
+
+    .current-input {
+        font-size: 28px;
+    }
+
+    .calculator-body {
+        gap: 8px;
+    }
+
+    .calculator-numbers {
+        gap: 8px;
+    }
+
+    .calculator-numbers > div {
+        gap: 8px;
+    }
+
+    .calculator-operators {
+        gap: 8px;
+    }
+
+    button {
+        font-size: 20px;
+    }
+}
+
+/* Extra small screens (iPhone SE, etc) */
+@media screen and (max-width: 375px) {
+    :root {
+        --btn-size: 52px;
+        --radius: 10px;
+    }
+
+    .page-container {
+        padding: 15px 10px;
+        gap: 15px;
+    }
+
+    .calc-name-field {
+        padding: 10px;
+        min-height: 145px;
+    }
+
+    #face {
+        font-size: 22px;
+    }
+
+    #title {
+        font-size: 18px;
+    }
+
+    #title-p {
+        font-size: 12px;
+    }
+
+    #title-p2 {
+        font-size: 11px;
+    }
+
+    #commentary {
+        font-size: 11px;
+    }
+
+    .calculator-container {
+        padding: 12px;
+    }
+
+    .calculator-head {
+        padding: 8px 10px;
+        margin-bottom: 12px;
+    }
+
+    .current-operation {
+        font-size: 14px;
+    }
+
+    .current-input {
+        font-size: 24px;
+    }
+
+    .calculator-body {
+        gap: 6px;
+    }
+
+    .calculator-numbers {
+        gap: 6px;
+    }
+
+    .calculator-numbers > div {
+        gap: 6px;
+    }
+
+    .calculator-operators {
+        gap: 6px;
+    }
+
+    button {
+        font-size: 18px;
+    }
 }

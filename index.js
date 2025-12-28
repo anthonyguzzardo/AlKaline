@@ -57,6 +57,10 @@ divide.addEventListener('click', e => {
     renderDisplay('/');
 })
 
+document.getElementById('equals').addEventListener('click', e => {
+    calculateEquals();
+})
+
 
 // FUNCTIONS
 
@@ -87,6 +91,37 @@ function allClear(){
     currentInputContainer.value     = '';
     currentOperation.value          = '';
 
+}
+
+function calculateEquals(){
+    if(currentOperator === null || currentInput === null) return;
+
+    let result;
+    const a = sum !== null ? sum : prevInput;
+    const b = currentInput;
+
+    if(a === null) return;
+
+    switch(currentOperator){
+        case '+': result = a + b; break;
+        case '-': result = a - b; break;
+        case '*': result = a * b; break;
+        case '/': result = a / b; break;
+        default: return;
+    }
+
+    // Display the full equation and result
+    currentOperation.value = `${a} ${currentOperator} ${b} =`;
+    currentInputContainer.value = result;
+
+    // Track result for Al Kaline
+    alKaline.trackResult(result);
+
+    // Set up for potential chaining
+    sum = result;
+    prevInput = result;
+    currentInput = null;
+    currentInputArray = [];
 }
 
 function renderDisplay(operator){
@@ -959,11 +994,28 @@ alKaline.init();
 const hyperspace = {
     canvas: document.getElementById('hyperspace'),
     ctx: null,
-    stars: [],
-    numStars: 200,
     warpSpeed: false,
     warpColor: { r: 100, g: 150, b: 255 },
     animationId: null,
+
+    // Different depth layers
+    layers: {
+        // Giant nebula clouds (beautiful gas)
+        nebulae: [],
+        // Background - distant galaxies (almost static)
+        background: [],
+        // Star clusters
+        clusters: [],
+        // Far stars - very slow
+        far: [],
+        // Mid stars - moderate
+        mid: [],
+        // Close stars - fast, streak during warp
+        close: []
+    },
+
+    // Special celestial objects
+    specialObjects: [],
 
     // Color presets for operators
     colors: {
@@ -978,81 +1030,424 @@ const hyperspace = {
         this.ctx = this.canvas.getContext('2d');
         this.resize();
         window.addEventListener('resize', () => this.resize());
-        this.createStars();
+        this.createUniverse();
         this.animate();
     },
 
     resize() {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
+        // Recreate on resize to fill screen
+        if (this.layers.background.length > 0) {
+            this.createUniverse();
+        }
     },
 
-    createStars() {
-        this.stars = [];
-        for (let i = 0; i < this.numStars; i++) {
-            this.stars.push({
-                x: Math.random() * this.canvas.width - this.canvas.width / 2,
-                y: Math.random() * this.canvas.height - this.canvas.height / 2,
-                z: Math.random() * 1000,
-                prevZ: 1000
+    // Beautiful space color palettes
+    nebulaColors: [
+        // Purple/violet nebula
+        { inner: [180, 100, 255], mid: [120, 50, 200], outer: [80, 20, 150] },
+        // Orange/gold nebula
+        { inner: [255, 180, 100], mid: [255, 120, 50], outer: [200, 80, 30] },
+        // Teal/cyan nebula
+        { inner: [100, 255, 220], mid: [50, 200, 180], outer: [20, 150, 140] },
+        // Pink/magenta nebula
+        { inner: [255, 150, 200], mid: [220, 80, 150], outer: [180, 40, 120] },
+        // Blue/deep space
+        { inner: [150, 180, 255], mid: [80, 100, 200], outer: [40, 60, 150] },
+        // Red/crimson nebula
+        { inner: [255, 120, 100], mid: [200, 60, 60], outer: [150, 30, 40] },
+        // Green/emerald (rare)
+        { inner: [150, 255, 150], mid: [80, 200, 100], outer: [40, 150, 60] },
+    ],
+
+    createUniverse() {
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+
+        // === LARGE NEBULA CLOUDS (beautiful gas clouds) ===
+        this.layers.nebulae = [];
+        for (let i = 0; i < 5; i++) {
+            const palette = this.nebulaColors[Math.floor(Math.random() * this.nebulaColors.length)];
+            this.layers.nebulae.push({
+                x: Math.random() * w,
+                y: Math.random() * h,
+                size: Math.random() * 200 + 150,
+                palette: palette,
+                drift: {
+                    x: (Math.random() - 0.5) * 0.1,
+                    y: (Math.random() - 0.5) * 0.1
+                },
+                // Multiple cloud layers for depth
+                clouds: Array.from({ length: 4 }, () => ({
+                    offsetX: (Math.random() - 0.5) * 100,
+                    offsetY: (Math.random() - 0.5) * 100,
+                    size: Math.random() * 0.8 + 0.4,
+                    opacity: Math.random() * 0.15 + 0.05
+                }))
+            });
+        }
+
+        // === DISTANT GALAXIES ===
+        this.layers.background = [];
+        for (let i = 0; i < 8; i++) {
+            const palette = this.nebulaColors[Math.floor(Math.random() * this.nebulaColors.length)];
+            this.layers.background.push({
+                x: Math.random() * w,
+                y: Math.random() * h,
+                size: Math.random() * 25 + 15,
+                type: Math.random() < 0.6 ? 'spiral' : 'elliptical',
+                palette: palette,
+                rotation: Math.random() * Math.PI * 2,
+                tilt: Math.random() * 0.6 + 0.2 // How edge-on we see it
+            });
+        }
+
+        // === STAR CLUSTERS (dense star regions) ===
+        this.layers.clusters = [];
+        for (let i = 0; i < 4; i++) {
+            this.layers.clusters.push({
+                x: Math.random() * w,
+                y: Math.random() * h,
+                size: Math.random() * 40 + 20,
+                density: Math.floor(Math.random() * 20 + 15),
+                color: Math.random() < 0.5 ?
+                    [255, 250, 220] : // Warm cluster
+                    [220, 240, 255]   // Cool cluster
+            });
+        }
+
+        // Far stars - dim, very slow (z: 800-1000)
+        this.layers.far = [];
+        for (let i = 0; i < 100; i++) {
+            this.layers.far.push({
+                x: Math.random() * w - w / 2,
+                y: Math.random() * h - h / 2,
+                z: Math.random() * 200 + 800,
+                prevZ: 1000,
+                brightness: Math.random() * 0.3 + 0.1,
+                size: Math.random() * 1 + 0.5
+            });
+        }
+
+        // Mid stars - medium brightness (z: 400-800)
+        this.layers.mid = [];
+        for (let i = 0; i < 80; i++) {
+            // Varied star colors
+            const starType = Math.random();
+            let color;
+            if (starType < 0.1) color = { r: 255, g: 200, b: 150 };      // Orange giant
+            else if (starType < 0.2) color = { r: 200, g: 220, b: 255 }; // Blue
+            else if (starType < 0.25) color = { r: 255, g: 250, b: 200 };// Yellow
+            else color = { r: 255, g: 255, b: 255 };                      // White
+
+            this.layers.mid.push({
+                x: Math.random() * w - w / 2,
+                y: Math.random() * h - h / 2,
+                z: Math.random() * 400 + 400,
+                prevZ: 800,
+                brightness: Math.random() * 0.5 + 0.3,
+                size: Math.random() * 1.5 + 0.5,
+                color: color
+            });
+        }
+
+        // Close stars - bright, fast (z: 0-400)
+        this.layers.close = [];
+        for (let i = 0; i < 60; i++) {
+            const starType = Math.random();
+            let color;
+            if (starType < 0.15) color = { r: 255, g: 180, b: 130 };     // Orange
+            else if (starType < 0.3) color = { r: 180, g: 210, b: 255 }; // Blue-white
+            else if (starType < 0.4) color = { r: 255, g: 255, b: 200 }; // Yellow-white
+            else color = { r: 255, g: 255, b: 255 };
+
+            this.layers.close.push({
+                x: Math.random() * w - w / 2,
+                y: Math.random() * h - h / 2,
+                z: Math.random() * 400,
+                prevZ: 400,
+                brightness: Math.random() * 0.4 + 0.6,
+                size: Math.random() * 2 + 1,
+                color: color
+            });
+        }
+
+        // Special objects - just quasars and black holes (no spinning stuff)
+        this.specialObjects = [];
+
+        // Quasars (super bright distant points with glow)
+        for (let i = 0; i < 2; i++) {
+            const palette = this.nebulaColors[Math.floor(Math.random() * this.nebulaColors.length)];
+            this.specialObjects.push({
+                type: 'quasar',
+                x: Math.random() * w,
+                y: Math.random() * h,
+                size: 2,
+                pulse: Math.random() * Math.PI * 2,
+                pulseSpeed: Math.random() * 0.03 + 0.01,
+                color: palette.inner
+            });
+        }
+
+        // Black hole (rare, edge of screen)
+        if (Math.random() < 0.4) {
+            this.specialObjects.push({
+                type: 'blackhole',
+                x: Math.random() < 0.5 ? w * 0.1 : w * 0.9,
+                y: Math.random() * h,
+                size: 60
             });
         }
     },
 
     animate() {
         const ctx = this.ctx;
-        const cx = this.canvas.width / 2;
-        const cy = this.canvas.height / 2;
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+        const cx = w / 2;
+        const cy = h / 2;
 
-        // Clear with trail effect
-        ctx.fillStyle = this.warpSpeed ? 'rgba(0, 0, 20, 0.1)' : 'rgba(24, 24, 27, 0.3)';
-        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        // Clear - darker during warp for contrast
+        ctx.fillStyle = this.warpSpeed ? 'rgba(0, 0, 10, 0.15)' : 'rgba(24, 24, 27, 0.4)';
+        ctx.fillRect(0, 0, w, h);
 
-        const speed = this.warpSpeed ? 50 : 2;
         const c = this.warpColor;
+        const warpMultiplier = this.warpSpeed ? 25 : 1;
 
-        for (let star of this.stars) {
+        // === NEBULAE (beautiful gas clouds - rendered first, behind everything) ===
+        for (let nebula of this.layers.nebulae) {
+            // Slow drift
+            nebula.x += nebula.drift.x;
+            nebula.y += nebula.drift.y;
+
+            // Wrap around screen
+            if (nebula.x < -nebula.size) nebula.x = w + nebula.size;
+            if (nebula.x > w + nebula.size) nebula.x = -nebula.size;
+            if (nebula.y < -nebula.size) nebula.y = h + nebula.size;
+            if (nebula.y > h + nebula.size) nebula.y = -nebula.size;
+
+            const p = nebula.palette;
+
+            // Draw multiple overlapping cloud layers for that gaseous look
+            for (let cloud of nebula.clouds) {
+                const cloudX = nebula.x + cloud.offsetX;
+                const cloudY = nebula.y + cloud.offsetY;
+                const cloudSize = nebula.size * cloud.size;
+
+                const grad = ctx.createRadialGradient(cloudX, cloudY, 0, cloudX, cloudY, cloudSize);
+                grad.addColorStop(0, `rgba(${p.inner[0]}, ${p.inner[1]}, ${p.inner[2]}, ${cloud.opacity})`);
+                grad.addColorStop(0.4, `rgba(${p.mid[0]}, ${p.mid[1]}, ${p.mid[2]}, ${cloud.opacity * 0.6})`);
+                grad.addColorStop(0.7, `rgba(${p.outer[0]}, ${p.outer[1]}, ${p.outer[2]}, ${cloud.opacity * 0.3})`);
+                grad.addColorStop(1, 'transparent');
+
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.arc(cloudX, cloudY, cloudSize, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // === DISTANT GALAXIES ===
+        for (let galaxy of this.layers.background) {
+            ctx.save();
+            ctx.translate(galaxy.x, galaxy.y);
+            ctx.rotate(galaxy.rotation);
+
+            const p = galaxy.palette;
+
+            if (galaxy.type === 'spiral') {
+                // Spiral galaxy - ellipse with bright core
+                const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, galaxy.size);
+                grad.addColorStop(0, `rgba(255, 255, 240, 0.3)`);
+                grad.addColorStop(0.2, `rgba(${p.inner[0]}, ${p.inner[1]}, ${p.inner[2]}, 0.2)`);
+                grad.addColorStop(0.6, `rgba(${p.mid[0]}, ${p.mid[1]}, ${p.mid[2]}, 0.1)`);
+                grad.addColorStop(1, 'transparent');
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.ellipse(0, 0, galaxy.size, galaxy.size * galaxy.tilt, 0, 0, Math.PI * 2);
+                ctx.fill();
+            } else {
+                // Elliptical galaxy - rounder, more uniform
+                const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, galaxy.size);
+                grad.addColorStop(0, `rgba(255, 240, 220, 0.25)`);
+                grad.addColorStop(0.5, `rgba(${p.mid[0]}, ${p.mid[1]}, ${p.mid[2]}, 0.1)`);
+                grad.addColorStop(1, 'transparent');
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.ellipse(0, 0, galaxy.size, galaxy.size * 0.7, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+
+        // === STAR CLUSTERS ===
+        for (let cluster of this.layers.clusters) {
+            const col = cluster.color;
+            for (let i = 0; i < cluster.density; i++) {
+                // Gaussian-ish distribution for cluster shape
+                const angle = Math.random() * Math.PI * 2;
+                const dist = Math.random() * Math.random() * cluster.size; // Concentrated toward center
+                const sx = cluster.x + Math.cos(angle) * dist;
+                const sy = cluster.y + Math.sin(angle) * dist;
+                const size = Math.random() * 1.5 + 0.5;
+                const alpha = Math.random() * 0.4 + 0.2;
+
+                ctx.globalAlpha = alpha;
+                ctx.fillStyle = `rgb(${col[0]}, ${col[1]}, ${col[2]})`;
+                ctx.beginPath();
+                ctx.arc(sx, sy, size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        ctx.globalAlpha = 1;
+
+        // === SPECIAL OBJECTS (quasars, black holes) ===
+        for (let obj of this.specialObjects) {
+            if (obj.type === 'quasar') {
+                obj.pulse += obj.pulseSpeed;
+                const intensity = (Math.sin(obj.pulse) + 1) / 2;
+                const size = obj.size + intensity * 2;
+                const col = obj.color;
+
+                // Colored glow
+                const grad = ctx.createRadialGradient(obj.x, obj.y, 0, obj.x, obj.y, size * 6);
+                grad.addColorStop(0, `rgba(255, 255, 255, ${0.9 + intensity * 0.1})`);
+                grad.addColorStop(0.2, `rgba(${col[0]}, ${col[1]}, ${col[2]}, 0.4)`);
+                grad.addColorStop(0.5, `rgba(${col[0]}, ${col[1]}, ${col[2]}, 0.1)`);
+                grad.addColorStop(1, 'transparent');
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.arc(obj.x, obj.y, size * 6, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Bright core
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(obj.x, obj.y, size * 0.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            else if (obj.type === 'blackhole') {
+                // Gravitational lensing - dark void with orange/red accretion glow
+                const grad = ctx.createRadialGradient(obj.x, obj.y, obj.size * 0.2, obj.x, obj.y, obj.size);
+                grad.addColorStop(0, 'rgba(0, 0, 0, 0.98)');
+                grad.addColorStop(0.5, 'rgba(0, 0, 0, 0.9)');
+                grad.addColorStop(0.7, 'rgba(20, 0, 0, 0.7)');
+                grad.addColorStop(0.82, 'rgba(255, 100, 30, 0.25)');
+                grad.addColorStop(0.88, 'rgba(255, 180, 80, 0.2)');
+                grad.addColorStop(0.94, 'rgba(255, 220, 150, 0.1)');
+                grad.addColorStop(1, 'transparent');
+
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.arc(obj.x, obj.y, obj.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // === FAR STARS (very slow) ===
+        const farSpeed = 0.2 * warpMultiplier;
+        for (let star of this.layers.far) {
             star.prevZ = star.z;
-            star.z -= speed;
+            star.z -= farSpeed;
 
-            if (star.z <= 0) {
-                star.x = Math.random() * this.canvas.width - cx;
-                star.y = Math.random() * this.canvas.height - cy;
+            if (star.z <= 800) {
+                star.x = Math.random() * w - cx;
+                star.y = Math.random() * h - cy;
                 star.z = 1000;
                 star.prevZ = 1000;
             }
 
-            // Project to 2D
+            const sx = (star.x / star.z) * 400 + cx;
+            const sy = (star.y / star.z) * 400 + cy;
+
+            ctx.globalAlpha = star.brightness * 0.5;
+            ctx.fillStyle = '#aaccff';
+            ctx.beginPath();
+            ctx.arc(sx, sy, star.size * 0.5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // === MID STARS (moderate) ===
+        const midSpeed = 1 * warpMultiplier;
+        for (let star of this.layers.mid) {
+            star.prevZ = star.z;
+            star.z -= midSpeed;
+
+            if (star.z <= 400) {
+                star.x = Math.random() * w - cx;
+                star.y = Math.random() * h - cy;
+                star.z = 800;
+                star.prevZ = 800;
+            }
+
             const sx = (star.x / star.z) * 500 + cx;
             const sy = (star.y / star.z) * 500 + cy;
             const px = (star.x / star.prevZ) * 500 + cx;
             const py = (star.y / star.prevZ) * 500 + cy;
 
-            // Size based on distance
-            const size = (1 - star.z / 1000) * 3;
+            ctx.globalAlpha = star.brightness;
 
             if (this.warpSpeed) {
-                // Draw streak with current color
-                const gradient = ctx.createLinearGradient(px, py, sx, sy);
-                gradient.addColorStop(0, `rgba(${c.r}, ${c.g}, ${c.b}, 0)`);
-                gradient.addColorStop(1, `rgba(${Math.min(c.r + 100, 255)}, ${Math.min(c.g + 100, 255)}, ${Math.min(c.b + 100, 255)}, 1)`);
+                // Small streak
+                const grad = ctx.createLinearGradient(px, py, sx, sy);
+                grad.addColorStop(0, `rgba(${c.r}, ${c.g}, ${c.b}, 0)`);
+                grad.addColorStop(1, `rgba(${star.color.r}, ${star.color.g}, ${star.color.b}, 0.6)`);
+                ctx.strokeStyle = grad;
+                ctx.lineWidth = star.size;
+                ctx.beginPath();
+                ctx.moveTo(px, py);
+                ctx.lineTo(sx, sy);
+                ctx.stroke();
+            } else {
+                ctx.fillStyle = `rgb(${star.color.r}, ${star.color.g}, ${star.color.b})`;
+                ctx.beginPath();
+                ctx.arc(sx, sy, star.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
 
-                ctx.strokeStyle = gradient;
+        // === CLOSE STARS (fast, big streaks) ===
+        const closeSpeed = 3 * warpMultiplier;
+        for (let star of this.layers.close) {
+            star.prevZ = star.z;
+            star.z -= closeSpeed;
+
+            if (star.z <= 1) {
+                star.x = Math.random() * w - cx;
+                star.y = Math.random() * h - cy;
+                star.z = 400;
+                star.prevZ = 400;
+            }
+
+            const sx = (star.x / star.z) * 500 + cx;
+            const sy = (star.y / star.z) * 500 + cy;
+            const px = (star.x / star.prevZ) * 500 + cx;
+            const py = (star.y / star.prevZ) * 500 + cy;
+            const size = (1 - star.z / 400) * star.size * 2;
+
+            ctx.globalAlpha = star.brightness;
+
+            if (this.warpSpeed) {
+                // Long streak
+                const grad = ctx.createLinearGradient(px, py, sx, sy);
+                grad.addColorStop(0, `rgba(${c.r}, ${c.g}, ${c.b}, 0)`);
+                grad.addColorStop(1, `rgba(${Math.min(c.r + 100, 255)}, ${Math.min(c.g + 100, 255)}, ${Math.min(c.b + 100, 255)}, 1)`);
+                ctx.strokeStyle = grad;
                 ctx.lineWidth = size;
                 ctx.beginPath();
                 ctx.moveTo(px, py);
                 ctx.lineTo(sx, sy);
                 ctx.stroke();
             } else {
-                // Draw dot
-                const brightness = (1 - star.z / 1000);
-                ctx.fillStyle = `rgba(255, 255, 255, ${brightness * 0.5})`;
+                ctx.fillStyle = `rgb(${star.color.r}, ${star.color.g}, ${star.color.b})`;
                 ctx.beginPath();
-                ctx.arc(sx, sy, size * 0.5, 0, Math.PI * 2);
+                ctx.arc(sx, sy, size, 0, Math.PI * 2);
                 ctx.fill();
             }
         }
 
+        ctx.globalAlpha = 1;
         this.animationId = requestAnimationFrame(() => this.animate());
     },
 
