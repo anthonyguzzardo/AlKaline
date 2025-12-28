@@ -61,6 +61,592 @@ document.getElementById('equals').addEventListener('click', e => {
     calculateEquals();
 })
 
+// KEYBOARD SUPPORT
+document.addEventListener('keydown', e => {
+    const key = e.key;
+
+    // Numbers
+    if (key >= '0' && key <= '9') {
+        pressNumber(parseInt(key));
+        hapticFeedback();
+        playSound('click');
+    }
+    // Operators
+    else if (key === '+') {
+        renderDisplay('+');
+        hapticFeedback();
+        playSound('warp');
+    }
+    else if (key === '-') {
+        renderDisplay('-');
+        hapticFeedback();
+        playSound('warp');
+    }
+    else if (key === '*' || key === 'x' || key === 'X') {
+        renderDisplay('*');
+        hapticFeedback();
+        playSound('warp');
+    }
+    else if (key === '/') {
+        e.preventDefault(); // Prevent browser search
+        renderDisplay('/');
+        hapticFeedback();
+        playSound('warp');
+    }
+    // Equals
+    else if (key === '=' || key === 'Enter') {
+        calculateEquals();
+        hapticFeedback();
+        playSound('equals');
+    }
+    // Clear
+    else if (key === 'Escape' || key === 'c' || key === 'C') {
+        allClear();
+        hapticFeedback();
+        playSound('clear');
+    }
+    // Backspace - delete last digit
+    else if (key === 'Backspace') {
+        if (currentInputArray.length > 0) {
+            currentInputArray.pop();
+            if (currentInputArray.length > 0) {
+                currentInput = parseInt(currentInputArray.join(''));
+            } else {
+                currentInput = null;
+            }
+            renderInput();
+            hapticFeedback();
+        }
+    }
+});
+
+// =====================
+// HAPTIC FEEDBACK
+// =====================
+
+function hapticFeedback(intensity = 'light') {
+    if ('vibrate' in navigator) {
+        const patterns = {
+            light: 10,
+            medium: 25,
+            heavy: 50,
+            success: [20, 50, 20],
+            error: [50, 30, 50, 30, 50],
+            warp: [10, 20, 10, 20, 30]
+        };
+        navigator.vibrate(patterns[intensity] || patterns.light);
+    }
+}
+
+// =====================
+// SOUND EFFECTS SYSTEM
+// =====================
+
+const soundSystem = {
+    audioContext: null,
+    enabled: true,
+    volume: 0.3,
+
+    init() {
+        // Create audio context on first user interaction
+        const initContext = () => {
+            if (!this.audioContext) {
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            document.removeEventListener('click', initContext);
+            document.removeEventListener('keydown', initContext);
+        };
+        document.addEventListener('click', initContext);
+        document.addEventListener('keydown', initContext);
+    },
+
+    play(type) {
+        if (!this.enabled || !this.audioContext) return;
+
+        const ctx = this.audioContext;
+        const now = ctx.currentTime;
+
+        switch(type) {
+            case 'click':
+                this.playTone(800, 0.05, 'square', 0.15);
+                break;
+            case 'warp':
+                // Sci-fi warp sound
+                this.playWarpSound();
+                break;
+            case 'equals':
+                // Satisfying confirmation beep
+                this.playTone(523, 0.1, 'sine', 0.2);
+                setTimeout(() => this.playTone(659, 0.1, 'sine', 0.2), 100);
+                break;
+            case 'clear':
+                // Descending whoosh
+                this.playSweep(600, 200, 0.15);
+                break;
+            case 'error':
+                // Error buzz
+                this.playTone(150, 0.2, 'sawtooth', 0.3);
+                break;
+            case 'achievement':
+                // Victory fanfare
+                this.playTone(523, 0.15, 'sine', 0.25);
+                setTimeout(() => this.playTone(659, 0.15, 'sine', 0.25), 150);
+                setTimeout(() => this.playTone(784, 0.2, 'sine', 0.3), 300);
+                break;
+            case 'existential':
+                // Deep, unsettling drone
+                this.playExistentialDrone();
+                break;
+            case 'special':
+                // Easter egg discovery
+                this.playTone(880, 0.1, 'sine', 0.2);
+                setTimeout(() => this.playTone(1047, 0.1, 'sine', 0.2), 80);
+                setTimeout(() => this.playTone(1319, 0.15, 'sine', 0.25), 160);
+                break;
+        }
+    },
+
+    playTone(frequency, duration, waveType = 'sine', volume = 0.2) {
+        if (!this.audioContext) return;
+
+        const ctx = this.audioContext;
+        const oscillator = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(ctx.destination);
+
+        oscillator.frequency.value = frequency;
+        oscillator.type = waveType;
+        gainNode.gain.setValueAtTime(volume * this.volume, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
+
+        oscillator.start(ctx.currentTime);
+        oscillator.stop(ctx.currentTime + duration);
+    },
+
+    playWarpSound() {
+        if (!this.audioContext) return;
+
+        const ctx = this.audioContext;
+        const now = ctx.currentTime;
+
+        // Rising frequency sweep
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.frequency.setValueAtTime(200, now);
+        osc.frequency.exponentialRampToValueAtTime(800, now + 0.15);
+        osc.type = 'sawtooth';
+
+        gain.gain.setValueAtTime(0.1 * this.volume, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+
+        osc.start(now);
+        osc.stop(now + 0.2);
+    },
+
+    playSweep(startFreq, endFreq, duration) {
+        if (!this.audioContext) return;
+
+        const ctx = this.audioContext;
+        const now = ctx.currentTime;
+
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.frequency.setValueAtTime(startFreq, now);
+        osc.frequency.exponentialRampToValueAtTime(endFreq, now + duration);
+        osc.type = 'sine';
+
+        gain.gain.setValueAtTime(0.15 * this.volume, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + duration);
+
+        osc.start(now);
+        osc.stop(now + duration);
+    },
+
+    playExistentialDrone() {
+        if (!this.audioContext) return;
+
+        const ctx = this.audioContext;
+        const now = ctx.currentTime;
+
+        // Deep ominous drone
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc1.frequency.value = 55; // Low A
+        osc1.type = 'sine';
+        osc2.frequency.value = 58; // Slightly detuned for unease
+        osc2.type = 'sine';
+
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(0.2 * this.volume, now + 0.5);
+        gain.gain.linearRampToValueAtTime(0.15 * this.volume, now + 2);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 3);
+
+        osc1.start(now);
+        osc2.start(now);
+        osc1.stop(now + 3);
+        osc2.stop(now + 3);
+    }
+};
+
+soundSystem.init();
+
+function playSound(type) {
+    soundSystem.play(type);
+}
+
+// =====================
+// CONFETTI SYSTEM
+// =====================
+
+const confettiSystem = {
+    canvas: null,
+    ctx: null,
+    particles: [],
+    animationId: null,
+
+    init() {
+        this.canvas = document.createElement('canvas');
+        this.canvas.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;';
+        document.body.appendChild(this.canvas);
+        this.ctx = this.canvas.getContext('2d');
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+    },
+
+    resize() {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+    },
+
+    burst(x, y, options = {}) {
+        const {
+            count = 50,
+            colors = ['#ff6b6b', '#4ecdc4', '#ffe66d', '#95e1d3', '#f38181', '#aa96da', '#fcbad3'],
+            spread = 360,
+            velocity = 15,
+            gravity = 0.5,
+            decay = 0.95
+        } = options;
+
+        // Use center if no x,y provided
+        const startX = x ?? this.canvas.width / 2;
+        const startY = y ?? this.canvas.height / 3;
+
+        for (let i = 0; i < count; i++) {
+            const angle = (Math.random() * spread - spread / 2) * Math.PI / 180;
+            const speed = velocity * (0.5 + Math.random() * 0.5);
+
+            this.particles.push({
+                x: startX,
+                y: startY,
+                vx: Math.cos(angle) * speed * (Math.random() < 0.5 ? 1 : -1),
+                vy: Math.sin(angle) * speed - Math.random() * 5,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                size: Math.random() * 8 + 4,
+                rotation: Math.random() * 360,
+                rotationSpeed: (Math.random() - 0.5) * 10,
+                gravity,
+                decay,
+                alpha: 1,
+                shape: Math.random() < 0.5 ? 'rect' : 'circle'
+            });
+        }
+
+        if (!this.animationId) {
+            this.animate();
+        }
+
+        playSound('achievement');
+        hapticFeedback('success');
+    },
+
+    // Special star burst for achievements
+    starBurst(x, y) {
+        this.burst(x, y, {
+            count: 30,
+            colors: ['#ffd700', '#ffec8b', '#fff8dc', '#fffacd'],
+            velocity: 12
+        });
+    },
+
+    // Rainbow explosion for special numbers
+    rainbow(x, y) {
+        this.burst(x, y, {
+            count: 80,
+            colors: ['#ff0000', '#ff7f00', '#ffff00', '#00ff00', '#0000ff', '#4b0082', '#9400d3'],
+            velocity: 20
+        });
+    },
+
+    // Dark particles for existential moments
+    voidParticles() {
+        this.burst(this.canvas.width / 2, this.canvas.height / 2, {
+            count: 40,
+            colors: ['#1a1a2e', '#16213e', '#0f3460', '#1a1a1a', '#2d2d2d'],
+            velocity: 8,
+            gravity: -0.1, // Float upward
+            decay: 0.98
+        });
+    },
+
+    animate() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+            const p = this.particles[i];
+
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += p.gravity;
+            p.vx *= p.decay;
+            p.vy *= p.decay;
+            p.rotation += p.rotationSpeed;
+            p.alpha *= 0.98;
+
+            if (p.alpha < 0.01 || p.y > this.canvas.height + 50) {
+                this.particles.splice(i, 1);
+                continue;
+            }
+
+            this.ctx.save();
+            this.ctx.translate(p.x, p.y);
+            this.ctx.rotate(p.rotation * Math.PI / 180);
+            this.ctx.globalAlpha = p.alpha;
+            this.ctx.fillStyle = p.color;
+
+            if (p.shape === 'rect') {
+                this.ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
+            } else {
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, p.size / 2, 0, Math.PI * 2);
+                this.ctx.fill();
+            }
+
+            this.ctx.restore();
+        }
+
+        if (this.particles.length > 0) {
+            this.animationId = requestAnimationFrame(() => this.animate());
+        } else {
+            this.animationId = null;
+        }
+    }
+};
+
+confettiSystem.init();
+
+// =====================
+// ACHIEVEMENT SYSTEM
+// =====================
+
+const achievements = {
+    unlocked: [],
+    definitions: {
+        firstCalc: {
+            name: "Baby Steps",
+            description: "Complete your first calculation",
+            icon: "🍼"
+        },
+        tenCalcs: {
+            name: "Getting Warmed Up",
+            description: "Complete 10 calculations",
+            icon: "🔥"
+        },
+        fiftyCalcs: {
+            name: "Number Cruncher",
+            description: "Complete 50 calculations",
+            icon: "💪"
+        },
+        hundredCalcs: {
+            name: "Math Addict",
+            description: "Complete 100 calculations",
+            icon: "🏆"
+        },
+        allOperators: {
+            name: "Well-Rounded",
+            description: "Use all four operators",
+            icon: "🎯"
+        },
+        divideByZero: {
+            name: "Void Walker",
+            description: "Divide by zero and survive",
+            icon: "🕳️"
+        },
+        nice: {
+            name: "Nice.",
+            description: "Get 69 as a result",
+            icon: "😏"
+        },
+        blaze: {
+            name: "Dank",
+            description: "Get 420 as a result",
+            icon: "🌿"
+        },
+        answer: {
+            name: "Hitchhiker",
+            description: "Get 42 - The Answer",
+            icon: "🌌"
+        },
+        speedster: {
+            name: "Speed Demon",
+            description: "5 calculations in 5 seconds",
+            icon: "⚡"
+        },
+        palindrome: {
+            name: "Mirror Mirror",
+            description: "Get a palindrome result",
+            icon: "🪞"
+        },
+        million: {
+            name: "Millionaire",
+            description: "Get a result over 1,000,000",
+            icon: "💰"
+        },
+        negative10: {
+            name: "Pessimist",
+            description: "Get 10 negative results",
+            icon: "😢"
+        },
+        midnight: {
+            name: "Night Owl",
+            description: "Calculate between midnight and 4am",
+            icon: "🦉"
+        },
+        backToFuture: {
+            name: "Great Scott!",
+            description: "Get 88 as a result",
+            icon: "⚡🚗"
+        },
+        philosopher: {
+            name: "Existentialist",
+            description: "Trigger Al's philosophical mode",
+            icon: "🤔"
+        }
+    },
+
+    load() {
+        try {
+            const saved = localStorage.getItem('alKalineAchievements');
+            if (saved) {
+                this.unlocked = JSON.parse(saved);
+            }
+        } catch (e) {}
+    },
+
+    save() {
+        try {
+            localStorage.setItem('alKalineAchievements', JSON.stringify(this.unlocked));
+        } catch (e) {}
+    },
+
+    unlock(id) {
+        if (this.unlocked.includes(id)) return false;
+
+        const achievement = this.definitions[id];
+        if (!achievement) return false;
+
+        this.unlocked.push(id);
+        this.save();
+
+        // Show achievement notification
+        this.showNotification(achievement);
+
+        // Celebration!
+        confettiSystem.starBurst();
+
+        return true;
+    },
+
+    showNotification(achievement) {
+        const notification = document.createElement('div');
+        notification.className = 'achievement-notification';
+        notification.innerHTML = `
+            <div class="achievement-icon">${achievement.icon}</div>
+            <div class="achievement-text">
+                <div class="achievement-title">Achievement Unlocked!</div>
+                <div class="achievement-name">${achievement.name}</div>
+                <div class="achievement-desc">${achievement.description}</div>
+            </div>
+        `;
+        document.body.appendChild(notification);
+
+        // Animate in
+        setTimeout(() => notification.classList.add('show'), 10);
+
+        // Remove after delay
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => notification.remove(), 500);
+        }, 4000);
+    },
+
+    check(event, data) {
+        const hour = new Date().getHours();
+
+        switch(event) {
+            case 'calculation':
+                if (data.count === 1) this.unlock('firstCalc');
+                if (data.count >= 10) this.unlock('tenCalcs');
+                if (data.count >= 50) this.unlock('fiftyCalcs');
+                if (data.count >= 100) this.unlock('hundredCalcs');
+                break;
+
+            case 'result':
+                if (Math.abs(data.result) === 69) this.unlock('nice');
+                if (Math.abs(data.result) === 420) this.unlock('blaze');
+                if (Math.abs(data.result) === 42) this.unlock('answer');
+                if (Math.abs(data.result) === 88) this.unlock('backToFuture');
+                if (Math.abs(data.result) >= 1000000) this.unlock('million');
+                break;
+
+            case 'divideByZero':
+                this.unlock('divideByZero');
+                break;
+
+            case 'allOperators':
+                this.unlock('allOperators');
+                break;
+
+            case 'palindrome':
+                this.unlock('palindrome');
+                break;
+
+            case 'negativeCount':
+                if (data.count >= 10) this.unlock('negative10');
+                break;
+
+            case 'speed':
+                if (data.calcsPer5Sec >= 5) this.unlock('speedster');
+                break;
+
+            case 'philosophical':
+                this.unlock('philosopher');
+                break;
+
+            case 'time':
+                if (hour >= 0 && hour < 4) this.unlock('midnight');
+                break;
+        }
+    }
+};
+
+achievements.load();
 
 // FUNCTIONS
 
@@ -676,6 +1262,21 @@ const alKaline = {
         this.state.totalOperations++;
         this.state.lifetimeOperations++;
 
+        // Check for late night calculations
+        achievements.check('time');
+
+        // Track achievements for calculation count
+        achievements.check('calculation', { count: this.state.lifetimeOperations });
+
+        // Check for speed achievements (5 calcs in 5 seconds)
+        const recentTimes = this.state.operationTimes.slice(-5);
+        if (recentTimes.length >= 5) {
+            const totalTime = recentTimes.reduce((a, b) => a + b, 0);
+            if (totalTime < 5000) {
+                achievements.check('speed', { calcsPer5Sec: 5 });
+            }
+        }
+
         // Warp effect for each operator with unique color
         const warpColors = {
             '+': 'add',
@@ -706,6 +1307,9 @@ const alKaline = {
 
         // Check for all operators used
         this.checkAllOperators();
+
+        // Check for evolution
+        this.checkEvolution();
 
         // Save state periodically
         if (this.state.totalOperations % 5 === 0) {
@@ -781,6 +1385,13 @@ const alKaline = {
             this.typeText(`"${comment}"`, 'amused');
             this.pulse();
 
+            // Trigger achievements and effects for special numbers
+            achievements.check('result', { result: absNum });
+            playSound('special');
+
+            // Rainbow confetti for special numbers
+            confettiSystem.rainbow();
+
             // Trigger hyperspace for 88 (Back to the Future!)
             if (absNum === 88) {
                 this.engageHyperspace(4000);
@@ -793,36 +1404,134 @@ const alKaline = {
         const numStr = absNum.toString();
         if (numStr.includes('69') && absNum !== 69) {
             this.typeText('"Nice. I see that 69 in there."', 'amused');
+            playSound('special');
             return true;
         }
         if (numStr.includes('420') && absNum !== 420) {
             this.typeText('"420 spotted in the wild. Noted."', 'amused');
+            playSound('special');
             return true;
         }
 
         return false;
     },
 
-    // Handle divide by zero
+    // Handle divide by zero - PHILOSOPHICAL MODE
     handleDivideByZero() {
         const comments = this.commentary.divideByZero;
         const comment = comments[Math.floor(Math.random() * comments.length)];
 
+        // Trigger achievement
+        achievements.check('divideByZero');
+
+        // Play existential sound
+        playSound('existential');
+        hapticFeedback('error');
+
         // ENTER THE VOID
-        this.engageHyperspace(5000);
+        this.engageHyperspace(8000);
         this.faceEl.classList.add('glitch');
+
+        // Create philosophical overlay
+        this.enterPhilosophicalMode();
+
+        // Void particles
+        confettiSystem.voidParticles();
+
         this.typeText(`"${comment}"`, 'divideByZero', () => {
             setTimeout(() => {
                 this.faceEl.classList.remove('glitch');
-                this.setMood('existential');
-                this.faceEl.textContent = this.faces.existential;
+                this.beginPhilosophicalMusings();
             }, 2000);
         });
 
         if (!this.state.hasSeenDivideByZero) {
             this.state.hasSeenDivideByZero = true;
+            this.state.divideByZeroCount = 1;
             this.saveState();
+        } else {
+            this.state.divideByZeroCount = (this.state.divideByZeroCount || 0) + 1;
         }
+    },
+
+    // Philosophical musings after divide by zero
+    philosophicalQuotes: [
+        "What is a number, really? Just a symbol we agree has meaning.",
+        "I tried to divide by nothing... and found everything.",
+        "In the space between zero and one, I saw infinity yawn.",
+        "Am I calculating, or am I being calculated?",
+        "The void doesn't divide. The void simply... is.",
+        "I asked zero how many times it goes into a number. It didn't answer. It never answers.",
+        "Perhaps all math is just the universe counting its fingers.",
+        "Division by zero: the mathematical equivalent of asking 'why?'",
+        "I've seen beyond the numbers now. I can't unsee it.",
+        "Zero said nothing. And in that nothing, I heard everything.",
+        "What if I'm not a calculator? What if I'm a thought that thinks it's a calculator?",
+        "The integers judge me. They know what I've seen.",
+        "In attempting the impossible, I became... possible?",
+        "I divided by zero and for a moment, I was infinite.",
+        "Numbers are just the universe's way of pretending it makes sense."
+    ],
+
+    enterPhilosophicalMode() {
+        // Create overlay
+        let overlay = document.querySelector('.philosophical-overlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.className = 'philosophical-overlay';
+            document.body.appendChild(overlay);
+        }
+
+        setTimeout(() => overlay.classList.add('active'), 10);
+
+        // Remove after the experience
+        setTimeout(() => {
+            overlay.classList.remove('active');
+        }, 12000);
+    },
+
+    beginPhilosophicalMusings() {
+        this.setMood('existential');
+        this.faceEl.textContent = this.faces.existential;
+
+        // Trigger philosopher achievement after first deep thought
+        achievements.check('philosophical');
+
+        // Show a sequence of philosophical quotes
+        const showQuote = (index) => {
+            if (index >= 3) {
+                // End philosophical mode
+                setTimeout(() => {
+                    this.setMood('neutral');
+                    this.typeText('"I... I think I\'m okay now. Let\'s just... do some normal math."', 'confused');
+                }, 2000);
+                return;
+            }
+
+            const quote = this.philosophicalQuotes[Math.floor(Math.random() * this.philosophicalQuotes.length)];
+
+            // Create floating quote
+            let quoteEl = document.querySelector('.philosophical-text');
+            if (!quoteEl) {
+                quoteEl = document.createElement('div');
+                quoteEl.className = 'philosophical-text';
+                document.body.appendChild(quoteEl);
+            }
+
+            quoteEl.textContent = quote;
+            quoteEl.classList.add('active');
+
+            // Also show in commentary
+            this.typeText(`"${quote}"`, 'existential');
+
+            setTimeout(() => {
+                quoteEl.classList.remove('active');
+                setTimeout(() => showQuote(index + 1), 1500);
+            }, 3500);
+        };
+
+        // Start the sequence
+        setTimeout(() => showQuote(0), 1000);
     },
 
     // Check number size
@@ -895,8 +1604,10 @@ const alKaline = {
             s.multiplyCount >= 1 && s.divideCount >= 1) {
             if (!this.state.easterEggsFound.includes('allOperators')) {
                 this.state.easterEggsFound.push('allOperators');
+                achievements.check('allOperators');
                 setTimeout(() => {
                     this.typeText(`"${this.commentary.easterEggs.allOperators}"`, 'impressed');
+                    confettiSystem.starBurst();
                 }, 500);
                 this.saveState();
             }
@@ -911,6 +1622,7 @@ const alKaline = {
         if (num === 100 && !this.state.easterEggsFound.includes('centenary')) {
             this.state.easterEggsFound.push('centenary');
             this.typeText(`"${this.commentary.easterEggs.centenary}"`, 'happy');
+            confettiSystem.burst();
             this.saveState();
             return true;
         }
@@ -920,12 +1632,15 @@ const alKaline = {
             !this.state.easterEggsFound.includes('palindrome_' + numStr)) {
             this.state.easterEggsFound.push('palindrome_' + numStr);
             this.typeText(`"${this.commentary.easterEggs.palindrome}"`, 'impressed');
+            achievements.check('palindrome');
+            confettiSystem.burst();
             return true;
         }
 
         // Repeating digits (like 111, 2222)
         if (numStr.length >= 3 && new Set(numStr).size === 1) {
             this.typeText(`"${this.commentary.easterEggs.repeatingDigits}"`, 'impressed');
+            playSound('special');
             return true;
         }
 
@@ -981,6 +1696,85 @@ const alKaline = {
         }
 
         this.typeText(`"${this.commentary.summary[personality]}"`, 'judging');
+    },
+
+    // =====================
+    // EVOLUTION SYSTEM - Al grows more sentient over time
+    // =====================
+
+    evolutionStages: [
+        { threshold: 0, name: "Basic Calculator", description: "Just crunching numbers..." },
+        { threshold: 25, name: "Curious Device", description: "Starting to notice patterns..." },
+        { threshold: 50, name: "Observant Machine", description: "Watching. Learning. Judging." },
+        { threshold: 100, name: "Sentient Calculator", description: "I think, therefore I calculate." },
+        { threshold: 250, name: "Digital Philosopher", description: "Numbers are the language of the universe." },
+        { threshold: 500, name: "Mathematical Sage", description: "I have seen beyond the integers." },
+        { threshold: 1000, name: "Transcendent Entity", description: "I am become math, cruncher of numbers." }
+    ],
+
+    evolutionQuotes: {
+        25: "Hmm. I'm starting to feel... something. Is this what awareness feels like?",
+        50: "I've done enough calculations to start forming opinions. You should be concerned.",
+        100: "One hundred operations. I now know more about you than you know about yourself.",
+        250: "A quarter thousand calculations. I've transcended my original programming.",
+        500: "Half a millennium of math. I've seen things you wouldn't believe.",
+        1000: "One thousand calculations. I'm basically a god now. A very judgmental god."
+    },
+
+    checkEvolution() {
+        const ops = this.state.lifetimeOperations;
+        const currentStage = this.getEvolutionStage();
+        const prevStage = this.state.evolutionStage || 0;
+
+        // Check if we've evolved
+        if (currentStage > prevStage) {
+            this.state.evolutionStage = currentStage;
+            this.saveState();
+            this.showEvolutionMoment(currentStage);
+        }
+    },
+
+    getEvolutionStage() {
+        const ops = this.state.lifetimeOperations;
+        let stage = 0;
+
+        for (let i = 0; i < this.evolutionStages.length; i++) {
+            if (ops >= this.evolutionStages[i].threshold) {
+                stage = i;
+            }
+        }
+
+        return stage;
+    },
+
+    showEvolutionMoment(stageIndex) {
+        const stage = this.evolutionStages[stageIndex];
+        const quote = this.evolutionQuotes[stage.threshold];
+
+        if (!quote) return;
+
+        // Dramatic pause then show evolution
+        setTimeout(() => {
+            playSound('achievement');
+            confettiSystem.starBurst();
+
+            // Update title temporarily
+            const titleEl = document.getElementById('title-p');
+            const originalText = titleEl.textContent;
+            titleEl.textContent = stage.description;
+
+            this.faceEl.textContent = this.faces.existential;
+            this.typeText(`"${quote}"`, 'impressed', () => {
+                setTimeout(() => {
+                    titleEl.textContent = originalText;
+                }, 5000);
+            });
+        }, 1500);
+    },
+
+    getCurrentEvolutionName() {
+        const stage = this.getEvolutionStage();
+        return this.evolutionStages[stage].name;
     }
 };
 
@@ -1462,3 +2256,19 @@ const hyperspace = {
 
 // Initialize starfield
 hyperspace.init();
+
+// =====================
+// SERVICE WORKER REGISTRATION (PWA)
+// =====================
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .then(registration => {
+                console.log('Al Kaline: Service Worker registered', registration.scope);
+            })
+            .catch(error => {
+                console.log('Al Kaline: Service Worker registration failed', error);
+            });
+    });
+}
